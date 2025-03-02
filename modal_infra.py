@@ -14,7 +14,7 @@ image = modal.Image.debian_slim().pip_install(
 )
 
 @app.function(image=image, secrets=[modal.Secret.from_name("llms")])
-def validate(diff, instructions):
+def validate_pr(diff, instructions):
     """
     Validate that a PR diff matches the given instructions.
     
@@ -50,7 +50,7 @@ def validate(diff, instructions):
     # Call the Anthropic API
     try:
         response = client.messages.create(
-            model="claude-3-opus-20240229",
+            model="claude-3-7-sonnet-latest",
             max_tokens=2000,
             temperature=0,
             system="You are a precise code reviewer that checks if code changes match the instructions. Be thorough but fair in your assessment.",
@@ -86,7 +86,7 @@ def validate(diff, instructions):
 @modal.web_endpoint(method="POST")
 def api_validate(diff: str, instructions: str):
     """API endpoint for the validation function"""
-    return validate.call(diff, instructions)
+    return validate_pr.remote(diff, instructions)
 
 if __name__ == "__main__":
     # For local testing
@@ -96,5 +96,5 @@ if __name__ == "__main__":
     with open("test_instructions.txt", "r") as f:
         test_instructions = f.read()
     
-    result = validate.local(test_diff, test_instructions)
+    result = validate_pr.local(test_diff, test_instructions)
     print(json.dumps(result, indent=2))

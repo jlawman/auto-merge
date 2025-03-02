@@ -11,15 +11,20 @@ with open("test_diff.txt", "r") as f:
 with open("test_instructions.txt", "r") as f:
     test_instructions = f.read()
 
-# Prepare payload
 payload = {
     "diff": test_diff,
     "instructions": test_instructions
 }
 
-# Send request
-response = requests.post(api_url, json=payload)
+print("Sending diff and instructions to Modal as query parameters")
+response1 = requests.post(api_url, params=payload)
+print(f"Status code: {response1.status_code}")
+try:
+    print(json.dumps(response1.json(), indent=2))
+except json.JSONDecodeError:
+    print("Response isn't valid JSON. Raw response:")
+    print(response1.text)
 
-# Print result
-print(f"Status code: {response.status_code}")
-print(json.dumps(response.json(), indent=2))
+# Print the content length for debugging
+print(f"\nDiff length: {len(test_diff)} characters")
+print(f"Instructions length: {len(test_instructions)} characters")
