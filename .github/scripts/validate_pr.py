@@ -36,7 +36,7 @@ def call_validation(diff, instructions):
     
     # Construct the prompt for validation
     prompt = f"""
-You are vvalidating a pull request. Please review the following changes and determine if they match the provided instructions.
+You are validating a pull request. Please review the following changes and determine if they match the provided instructions.
 
 Instructions:
 {instructions}
@@ -84,14 +84,16 @@ true/false
     response_content = llm_response.get("content", [{}])[0].get("text", "")
     print(f"Response content: {response_content}")
     # Extract verdict from tags using regex
-    verdict_match = re.search(r'<verdict>(.*?)</verdict>', response_content, re.IGNORECASE)
+    verdict_match = re.search(r'<verdict>(.*?)</verdict>', response_content, re.DOTALL | re.IGNORECASE)
+    print(f"Verdict match: {verdict_match}")
     is_valid = False
     if verdict_match:
         verdict_content = verdict_match.group(1).strip().lower()
         is_valid = verdict_content == "true"
 
+    print(f"Verdict content: {verdict_content}")
     comment = ""
-    comment_match = re.search(r'<comment>(.*?)</comment>', response_content, re.IGNORECASE)
+    comment_match = re.search(r'<comment>(.*?)</comment>', response_content, re.DOTALL | re.IGNORECASE)
     if comment_match:
         comment = comment_match.group(1).strip()
     else:
@@ -102,7 +104,9 @@ true/false
     
     # Format the response with clear sections
     formatted_comment = f"## Verdict: {verdict}\n\n### Justification:\n{comment}"
-    
+    print(f"RETURNING:")
+    print(f"Formatted comment: {formatted_comment}")
+    print(f"Is valid: {is_valid}")
     return {
         "valid": is_valid,
         "comment": formatted_comment
