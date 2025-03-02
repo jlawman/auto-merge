@@ -53,7 +53,7 @@ jobs:
         env:
           PR_DIFF: ${{ env.PR_DIFF }}
           PR_BODY: ${{ env.PR_BODY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MODAL_TOKEN: ${{ secrets.MODAL_TOKEN }}
 
       - name: Comment on PR with results
         uses: actions/github-script@v6

@@ -17,7 +17,7 @@ def extract_instructions(body):
 # Call Modal function to validate PR
 def call_modal_validation(diff, instructions):
     modal_token = os.environ.get('MODAL_TOKEN')
-    modal_endpoint = "https://api.modal.com/v1/apps/pr-validator/validate"
+    modal_endpoint = "https://jlawman--pr-validator-api-validate.modal.run"
     
     headers = {
         "Authorization": f"Bearer {modal_token}",
