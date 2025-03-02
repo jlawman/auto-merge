@@ -60,7 +60,7 @@ true/false
 """
     
     payload = {
-        "model": "claude-3-7-sonnet-latest",
+        "model": "claude-3-5-sonnet-latest",
         "max_tokens": 1000,
         "messages": [
             {"role": "user", "content": prompt}
