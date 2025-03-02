@@ -48,6 +48,7 @@ Please respond with:
 1. Whether the changes match the instructions (valid: true/false)
 2. A brief comment explaining your decision
 
+Sample format:
 <comment>
 brief comment explaining your decision
 </comment>
@@ -80,14 +81,23 @@ true/false
     llm_response = response.json()
     response_content = llm_response.get("content", [{}])[0].get("text", "")
     
-    # Simple heuristic to determine validity - can be improved
-    is_valid = "valid: true" in response_content.lower() or "changes match the instructions" in response_content.lower()
+    # Extract verdict from tags using regex
+    verdict_match = re.search(r'<verdict>(.*?)</verdict>', response_content, re.IGNORECASE)
+    is_valid = False
+    if verdict_match:
+        verdict_content = verdict_match.group(1).strip().lower()
+        is_valid = verdict_content == "true"
+
+    comment = ""
+    comment_match = re.search(r'<comment>(.*?)</comment>', response_content, re.IGNORECASE)
+    if comment_match:
+        comment = comment_match.group(1).strip()
     
     # Format the verdict and justification in a cleaner way
     verdict = "APPROVED" if is_valid else "REJECTED"
     
     # Format the response with clear sections
-    formatted_comment = f"## Verdict: {verdict}\n\n### Justification:\n{response_content}"
+    formatted_comment = f"## Verdict: {verdict}\n\n### Justification:\n{comment}"
     
     return {
         "valid": is_valid,
