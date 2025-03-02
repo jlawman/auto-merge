@@ -10,10 +10,10 @@ A simple tool to automatically merge or reject Pull requests from coding agents 
 ### Examples
 
 #### Rejected PR
-![Example of a rejected PR](media/example-rejected.png)
+![Example of a rejected PR](media/Example-Rejected.png)
 
 #### Approved PR
-![Example of an approved PR](media/example-approved.png)
+![Example of an approved PR](media/Example-Approved.png)
 
 
 
