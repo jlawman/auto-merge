@@ -79,8 +79,10 @@ true/false
     
     # Parse Anthropic response 
     llm_response = response.json()
+
+    print(f"LLM response: {llm_response}")
     response_content = llm_response.get("content", [{}])[0].get("text", "")
-    
+    print(f"Response content: {response_content}")
     # Extract verdict from tags using regex
     verdict_match = re.search(r'<verdict>(.*?)</verdict>', response_content, re.IGNORECASE)
     is_valid = False
