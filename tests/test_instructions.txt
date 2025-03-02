@@ -1,7 +1,0 @@
-PR Instructions:
-
-1. Add a new function called `new_feature` that returns a string "New Feature Implemented"
-2. Add a new method to the ExampleClass called `new_method` that returns the value multiplied by 2
-3. Make sure to add appropriate docstrings to the new function
-
-The PR should not modify any existing functionality. 
