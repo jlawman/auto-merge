@@ -28,25 +28,90 @@ jobs:
       - name: Get PR diff
         id: get-diff
         run: |
-          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-branch
+          echo "Extracting PR diff for PR #${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          echo "Getting diff URL..."
+          DIFF_URL_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          echo "API Response (first 300 chars): $(echo "$DIFF_URL_RESPONSE" | head -c 300)"
+          
+          PR_DIFF_URL=$(echo "$DIFF_URL_RESPONSE" | jq -r '.diff_url')
+          echo "Diff URL: $PR_DIFF_URL"
+          
+          if [ -z "$PR_DIFF_URL" ] || [ "$PR_DIFF_URL" = "null" ]; then
+            echo "ERROR: Failed to get diff URL!"
+            exit 1
+          fi
+          
+          echo "Fetching diff content..."
+          PR_DIFF=$(curl -s "$PR_DIFF_URL")
+          DIFF_SIZE=$(echo "$PR_DIFF" | wc -c)
+          echo "Diff size: $DIFF_SIZE bytes"
+          echo "Diff preview: $(echo "$PR_DIFF" | head -n 10)"
+          
+          if [ $DIFF_SIZE -lt 10 ]; then
+            echo "WARNING: Diff content seems too small!"
+          fi
+          
+          # Try both environment approaches
           echo "PR_DIFF<<EOF" >> $GITHUB_ENV
-          git diff origin/${{ github.event.pull_request.base.ref }}...pr-branch >> $GITHUB_ENV
+          echo "$PR_DIFF" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          
+          # Alternative: save to file
+          echo "$PR_DIFF" > pr_diff.txt
+          echo "Saved diff to file. Size: $(wc -c < pr_diff.txt) bytes"
 
       - name: Get PR description for instructions
         id: get-instructions
         run: |
+          echo "Extracting PR body..."
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_BODY=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" | \
-            jq -r '.body')
+          
+          BODY_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+          PR_BODY=$(echo "$BODY_RESPONSE" | jq -r '.body')
+          
+          echo "PR body length: $(echo "$PR_BODY" | wc -c) bytes"
+          echo "PR body preview: $(echo "$PR_BODY" | head -n 5)"
+          
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
           echo "$PR_BODY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          
+          # Alternative: save to file
+          echo "$PR_BODY" > pr_body.txt
+
+      - name: Debug environment
+        run: |
+          echo "Environment variables before validation:"
+          echo "PR_DIFF exists: $(if [ -n "$PR_DIFF" ]; then echo "YES - size $(echo "$PR_DIFF" | wc -c) bytes"; else echo "NO"; fi)"
+          echo "PR_BODY exists: $(if [ -n "$PR_BODY" ]; then echo "YES - size $(echo "$PR_BODY" | wc -c) bytes"; else echo "NO"; fi)"
+          echo "pr_diff.txt exists: $(if [ -f pr_diff.txt ]; then echo "YES - size $(wc -c < pr_diff.txt) bytes"; else echo "NO"; fi)"
+          echo "pr_body.txt exists: $(if [ -f pr_body.txt ]; then echo "YES - size $(wc -c < pr_body.txt) bytes"; else echo "NO"; fi)"
 
       - name: Validate PR against instructions
         id: validate
-        run: python .github/scripts/validate_pr.py
+        run: |
+          echo "Running validation script..."
+          # Alternative approach - pass files instead of environment variables
+          if [ -f pr_diff.txt ]; then
+            export PR_DIFF="$(cat pr_diff.txt)"
+            echo "Loaded PR_DIFF from file: $(echo "$PR_DIFF" | wc -c) bytes"
+          else
+            echo "WARNING: pr_diff.txt not found!"
+          fi
+          
+          if [ -f pr_body.txt ]; then
+            export PR_BODY="$(cat pr_body.txt)"
+            echo "Loaded PR_BODY from file: $(echo "$PR_BODY" | wc -c) bytes"
+          else
+            echo "WARNING: pr_body.txt not found!"
+          fi
+          
+          # Run validation with verbose output
+          python -v .github/scripts/validate_pr.py
         env:
           PR_DIFF: ${{ env.PR_DIFF }}
           PR_BODY: ${{ env.PR_BODY }}
