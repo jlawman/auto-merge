@@ -5,3 +5,7 @@ This is a project to auto merge PRs based on the instructions in the PR descript
 ## Setup
 
 [placeholder]
+
+## Usage
+
+[placeholder]
