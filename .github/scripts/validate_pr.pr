@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import os
+import json
+import requests
+import re
+
+# Extract XML tags from PR body to get instructions
+def extract_instructions(body):
+    # Look for tags like <instructions>...</instructions>
+    match = re.search(r'<instructions>(.*?)</instructions>', body, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    else:
+        # Fallback to using the entire PR body if no tags
+        return body.strip()
+
+# Call Modal function to validate PR
+def call_modal_validation(diff, instructions):
+    modal_token = os.environ.get('MODAL_TOKEN')
+    modal_endpoint = "https://api.modal.com/v1/apps/pr-validator/validate"
+    
+    headers = {
+        "Authorization": f"Bearer {modal_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "diff": diff,
+        "instructions": instructions
+    }
+    
+    response = requests.post(modal_endpoint, json=payload, headers=headers)
+    
+    if response.status_code != 200:
+        return {
+            "valid": False,
+            "comment": f"❌ Error calling validation service: {response.text}"
+        }
+    
+    return response.json()
+
+if __name__ == "__main__":
+    # Get PR diff and body from environment variables
+    pr_diff = os.environ.get('PR_DIFF', '')
+    pr_body = os.environ.get('PR_BODY', '')
+    
+    # Extract instructions from PR body
+    instructions = extract_instructions(pr_body)
+    
+    # Call Modal function for validation
+    result = call_modal_validation(pr_diff, instructions)
+    
+    # Write result to file for the next GitHub Action step
+    with open('validation_result.json', 'w') as f:
+        json.dump(result, f)
+    
+    print(f"Validation result: {'Valid' if result['valid'] else 'Invalid'}")

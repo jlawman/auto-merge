@@ -1,0 +1,81 @@
+name: PR Validation Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Need full history for diff
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Get PR diff
+        id: get-diff
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_DIFF=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" | \
+            jq -r '.diff_url' | xargs curl -s)
+          echo "PR_DIFF<<EOF" >> $GITHUB_ENV
+          echo "$PR_DIFF" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Get PR description for instructions
+        id: get-instructions
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_BODY=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" | \
+            jq -r '.body')
+          echo "PR_BODY<<EOF" >> $GITHUB_ENV
+          echo "$PR_BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Validate PR against instructions
+        id: validate
+        run: python .github/scripts/validate_pr.py
+        env:
+          PR_DIFF: ${{ env.PR_DIFF }}
+          PR_BODY: ${{ env.PR_BODY }}
+          MODAL_TOKEN: ${{ secrets.MODAL_TOKEN }}
+
+      - name: Comment on PR with results
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const validationResult = fs.readFileSync('validation_result.json', 'utf8');
+            const result = JSON.parse(validationResult);
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: result.comment
+            });
+            
+            if (result.valid) {
+              github.rest.pulls.merge({
+                pull_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                merge_method: 'squash'
+              });
+            }
