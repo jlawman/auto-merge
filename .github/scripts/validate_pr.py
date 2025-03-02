@@ -36,7 +36,7 @@ def call_validation(diff, instructions):
     
     # Construct the prompt for validation
     prompt = f"""
-You are validating a pull request. Please review the following changes and determine if they match the provided instructions.
+You are vvalidating a pull request. Please review the following changes and determine if they match the provided instructions.
 
 Instructions:
 {instructions}
