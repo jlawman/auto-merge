@@ -83,9 +83,15 @@ true/false
     # Simple heuristic to determine validity - can be improved
     is_valid = "valid: true" in response_content.lower() or "changes match the instructions" in response_content.lower()
     
+    # Format the verdict and justification in a cleaner way
+    verdict = "APPROVED" if is_valid else "REJECTED"
+    
+    # Format the response with clear sections
+    formatted_comment = f"## Verdict: {verdict}\n\n### Justification:\n{response_content}"
+    
     return {
         "valid": is_valid,
-        "comment": response_content
+        "comment": formatted_comment
     }
 
 if __name__ == "__main__":
