@@ -92,6 +92,8 @@ true/false
     comment_match = re.search(r'<comment>(.*?)</comment>', response_content, re.IGNORECASE)
     if comment_match:
         comment = comment_match.group(1).strip()
+    else:
+        comment = response_content
     
     # Format the verdict and justification in a cleaner way
     verdict = "APPROVED" if is_valid else "REJECTED"
