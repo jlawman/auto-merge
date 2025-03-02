@@ -36,7 +36,7 @@ def call_validation(diff, instructions):
     
     # Construct the prompt for validation
     prompt = f"""
-You are validating a pull request. Please review the following changes and determine if they match the provided instructions.
+You are vvalidating a pull request. Please review the following changes and determine if they match the provided instructions.
 
 Instructions:
 {instructions}
@@ -104,3 +104,12 @@ if __name__ == "__main__":
         json.dump(result, f)
     
     print(f"Validation result: {'Valid' if result['valid'] else 'Invalid'}")
+
+    if result['valid']:
+        # Merge the PR if validation passes
+        # This is a placeholder and should be replaced with actual GitHub API call
+        print("Merging the PR")
+    else:
+        # Close the PR if validation fails
+        # This is a placeholder and should be replaced with actual GitHub API call
+        print("Closing the PR")
