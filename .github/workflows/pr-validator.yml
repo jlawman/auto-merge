@@ -75,4 +75,11 @@ jobs:
                 repo: context.repo.repo,
                 merge_method: 'squash'
               });
+            } else {
+              github.rest.pulls.update({
+                pull_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'closed'
+              });
             }
