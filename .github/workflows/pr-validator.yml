@@ -28,12 +28,9 @@ jobs:
       - name: Get PR diff
         id: get-diff
         run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_DIFF=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" | \
-            jq -r '.diff_url' | xargs curl -s)
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-branch
           echo "PR_DIFF<<EOF" >> $GITHUB_ENV
-          echo "$PR_DIFF" >> $GITHUB_ENV
+          git diff origin/${{ github.event.pull_request.base.ref }}...pr-branch >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Get PR description for instructions
