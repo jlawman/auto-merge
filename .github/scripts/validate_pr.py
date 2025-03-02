@@ -35,6 +35,7 @@ def call_validation(diff, instructions):
     }
     
     # Construct the prompt for validation
+
     prompt = f"""<coding_agent_instructions>
 {instructions}
 </coding_agent_instructions>
